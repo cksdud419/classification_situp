@@ -1,4 +1,4 @@
-// 스쿼트 버전!
+// 사이드스쿼트 버전!
 // 모션 추정 코드
 let video;
 let countSound;
@@ -187,14 +187,17 @@ function classification() {
       averageScore += pose.keypoints[i].score;
     }
     averageScore /= 17.0;
-    if (averageScore >= 0.8) {
+    if (averageScore >= 0.7) {
       brain.classify(inputs, classifyResult);
     }
     else {
+      curState = 'Error';
       setTimeout(classification, 100);
     }
   }
   else {
+    curState = 'Error';
+    result_pose = undefined;
     setTimeout(classification, 100); //포즈가 인식되지 않았을 때 100밀리초마다 포즈추정 반복
   }
 }
@@ -203,13 +206,22 @@ let pastStateTime = 0;
 const stateChangeThreshold = 700; // 상태 변경 임계값
 let isCounting = false; // 횟수를 세고 있는지 여부를 나타내는 변수
 
+let result_pose;
+
 function classifyResult(error, results) {
-  pastState = curState;
+  result_pose = results;
+  
   if (error) {
     console.error(error);
     return;
   }
-  curState = results[0].label;
+
+  if(result_pose[0].confidence >= 0.99) {
+    pastState = curState;
+    curState = results[0].label;
+  }
+
+
 
   if (countName == curState && !isCounting && pastState == 'Default') {
     // countName과 curState가 일치하고, 이전에 'Default'자세였으며 횟수를 세고 있지 않은 경우
@@ -226,7 +238,6 @@ function classifyResult(error, results) {
     console.log('Exercise:', countName, ':', count);
     isCounting = false; // 횟수 세는 상태를 종료
   }
-
   classification(); // 반복 포즈 추정
 }
 
@@ -245,6 +256,9 @@ function draw() {
   translate(video.width, 0);
   scale(-1, 1);
   image(video, 0, 0, width, height);
+  fill(0, 0, 255);
+  strokeWeight(2);
+  stroke(255);
 
   if (pose) {
     for (let i = 0; i < pose.keypoints.length; i++) {
@@ -270,18 +284,47 @@ function draw() {
   }
 
   if(averageScore <= 0.7) {
+    // 안내 메시지 상자
     fill(color(0, 0, 0, 130));
     noStroke();
     rectMode(CENTER);
-    rect(width / 2, 0, width, 80);
+    rect(width / 2, 0, width, 130);
 
     scale(-1,1);
     textSize(20);
     textStyle(BOLD); // 볼드체 설정
     fill(255);
+    noStroke();
     strokeWeight(3);
     textAlign(CENTER, CENTER);
     text('전신이 카메라에 보이도록 해주세요.', -width/2, 22);
+    textSize(15);
+    text('연두색 상자와 빨간색 상자의 사이에 위치해주세요.', -width/2, 50); 
     scale(-1,1);
   }
+  
+  // 확인용 나중에 지워야됨
+  scale(-1,1);
+  stroke(255);
+  fill(0);
+  text(curState, -width/2, 400);
+  if(result_pose)
+    text(result_pose[0].confidence, -width/2, 430);
+  scale(-1,1);
+  // 여기까지
+
+  // 권장 동작인식 상자(연두)
+  fill(color(0, 0, 0, 0));
+  stroke(0,238,0);
+  strokeWeight(3);
+  rect(width / 2, 300, 200, 412);
+  stroke(255);
+
+  // 권장 동작인식 상자(빨강)
+  rectMode(TOP);
+  fill(color(0, 0, 0, 0));
+  stroke(240,0,0);
+  strokeWeight(3);
+  rect(width / 2, 310, 40, 280);
+  stroke(255);
 }
