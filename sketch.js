@@ -302,16 +302,6 @@ function draw() {
     text('연두색 상자와 빨간색 상자의 사이에 위치해주세요.', -width/2, 50); 
     scale(-1,1);
   }
-  
-  // 확인용 나중에 지워야됨
-  scale(-1,1);
-  stroke(255);
-  fill(0);
-  text(curState, -width/2, 400);
-  if(result_pose)
-    text(result_pose[0].confidence, -width/2, 430);
-  scale(-1,1);
-  // 여기까지
 
   // 권장 동작인식 상자(연두)
   fill(color(0, 0, 0, 0));
